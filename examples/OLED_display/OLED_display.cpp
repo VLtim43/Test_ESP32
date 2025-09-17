@@ -16,11 +16,9 @@ void setup() {
     for (;;);
   }
 
-  // Clear the display buffer
   display.clearDisplay();
 
-  // Set text properties
-  display.setTextSize(1);
+    display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
 
