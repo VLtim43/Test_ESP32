@@ -11,10 +11,15 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Rename original diagram.json if it exists and original backup doesn't exist
+# Backup original files if they exist and backups don't exist
 if [[ -f "$PROJECT_ROOT/diagram.json" && ! -f "$PROJECT_ROOT/diagram_original.json" ]]; then
     echo -e "${BLUE}Saving original diagram.json as diagram_original.json...${NC}"
     mv "$PROJECT_ROOT/diagram.json" "$PROJECT_ROOT/diagram_original.json"
+fi
+
+if [[ -f "$SRC_DIR/main.cpp" && ! -f "$PROJECT_ROOT/main_backup.cpp" ]]; then
+    echo -e "${BLUE}Saving original main.cpp as main_backup.cpp...${NC}"
+    cp "$SRC_DIR/main.cpp" "$PROJECT_ROOT/main_backup.cpp"
 fi
 
 # Function to display available examples
@@ -55,17 +60,18 @@ copy_sensor_files() {
 
     echo -e "${GREEN}Setting up sensor: $sensor_name${NC}"
 
-    # Clean src directory first
+    # Clean src directory (no backups in src to preserve)
     echo -e "${BLUE}Cleaning src directory...${NC}"
-    rm -f "$SRC_DIR"/*.cpp "$SRC_DIR"/*.h
+    find "$SRC_DIR" -name "*.cpp" -delete
+    rm -f "$SRC_DIR"/*.h
 
-    # Find and copy the main cpp file (rename to main.cpp)
-    local main_cpp=$(find "$sensor_dir" -name "*.cpp" -type f | head -1)
-    if [[ -n "$main_cpp" ]]; then
-        echo -e "${BLUE}Copying $(basename "$main_cpp") -> main.cpp${NC}"
-        cp "$main_cpp" "$SRC_DIR/main.cpp"
+    # Copy the sensor-specific .cpp file from example
+    local sensor_cpp="$sensor_dir/${sensor_name}.cpp"
+    if [[ -f "$sensor_cpp" ]]; then
+        echo -e "${BLUE}Copying ${sensor_name}.cpp to main.cpp${NC}"
+        cp "$sensor_cpp" "$SRC_DIR/main.cpp"
     else
-        echo -e "${RED}Error: No .cpp file found in $sensor_name${NC}"
+        echo -e "${RED}Error: No ${sensor_name}.cpp file found in $sensor_name${NC}"
         return 1
     fi
 
@@ -79,36 +85,26 @@ copy_sensor_files() {
         done <<< "$header_files"
     fi
 
-    # Copy any additional .cpp files (utilities, keep original names)
-    local cpp_count=$(find "$sensor_dir" -name "*.cpp" -type f | wc -l)
-    if [[ $cpp_count -gt 1 ]]; then
+    # Copy any additional .cpp files (utilities, excluding the main sensor .cpp file)
+    local additional_cpp=$(find "$sensor_dir" -name "*.cpp" -not -name "${sensor_name}.cpp" -type f)
+    if [[ -n "$additional_cpp" ]]; then
         echo -e "${BLUE}Copying additional .cpp files...${NC}"
-        find "$sensor_dir" -name "*.cpp" -type f | while read -r cpp_file; do
+        while IFS= read -r cpp_file; do
             local basename_cpp=$(basename "$cpp_file")
-            if [[ "$basename_cpp" != "$(basename "$main_cpp")" ]]; then
-                echo -e "${BLUE}  Copying $basename_cpp${NC}"
-                cp "$cpp_file" "$SRC_DIR/"
-            fi
-        done
+            echo -e "${BLUE}  Copying $basename_cpp${NC}"
+            cp "$cpp_file" "$SRC_DIR/"
+        done <<< "$additional_cpp"
     fi
 
-    # Find and copy diagram file
-    local diagram_file=""
+    # Find and copy diagram file (foldername.diagram.json format)
+    local diagram_file="$sensor_dir/${sensor_name}.diagram.json"
 
-    # Look for diagram files with different naming patterns
-    for pattern in "${sensor_name}_diagram.json" "${sensor_name}_display.json" "${sensor_name}.json"; do
-        if [[ -f "$sensor_dir/$pattern" ]]; then
-            diagram_file="$sensor_dir/$pattern"
-            break
-        fi
-    done
-
-    if [[ -n "$diagram_file" ]]; then
-        echo -e "${BLUE}Copying $(basename "$diagram_file") -> diagram.json${NC}"
+    if [[ -f "$diagram_file" ]]; then
+        echo -e "${BLUE}Copying ${sensor_name}.diagram.json -> diagram.json${NC}"
         cp "$diagram_file" "$PROJECT_ROOT/diagram.json"
     else
         echo -e "${YELLOW}Warning: No diagram file found for $sensor_name${NC}"
-        echo -e "${YELLOW}Looked for: ${sensor_name}_diagram.json, ${sensor_name}_display.json, ${sensor_name}.json${NC}"
+        echo -e "${YELLOW}Expected: ${sensor_name}.diagram.json${NC}"
     fi
 
     echo -e "${GREEN}Setup complete! Ready for Wokwi testing.${NC}"

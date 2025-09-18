@@ -14,14 +14,19 @@ echo -e "${GREEN}ESP32 Project Cleanup${NC}"
 echo "===================="
 echo ""
 
-# Clean src directory
-echo -e "${BLUE}Cleaning src directory...${NC}"
+# Clean and restore src directory
+echo -e "${BLUE}Cleaning and restoring src directory...${NC}"
 if [[ -d "$SRC_DIR" ]]; then
-    # Remove all files in src except .gitkeep if it exists
-    find "$SRC_DIR" -type f ! -name ".gitkeep" -delete
+    # Remove all files in src except .gitkeep and main_original.cpp
+    find "$SRC_DIR" -type f ! -name ".gitkeep" ! -name "main_original.cpp" -delete
 
-    # Create a minimal main.cpp for testing
-    cat > "$SRC_DIR/main.cpp" << 'EOF'
+    # Restore original main.cpp if backup exists
+    if [[ -f "$SRC_DIR/main_original.cpp" ]]; then
+        mv "$SRC_DIR/main_original.cpp" "$SRC_DIR/main.cpp"
+        echo -e "${GREEN}  ✓ Restored original main.cpp${NC}"
+    else
+        # Create a minimal main.cpp for testing
+        cat > "$SRC_DIR/main.cpp" << 'EOF'
 // copy the .cpp files you want to test here
 
 #include <Arduino.h>
@@ -31,9 +36,10 @@ void setup() {}
 
 void loop() {}
 EOF
+        echo -e "${BLUE}  ✓ Created minimal main.cpp${NC}"
+    fi
 
     echo -e "${GREEN}  ✓ Cleaned src directory${NC}"
-    echo -e "${BLUE}  ✓ Created minimal main.cpp${NC}"
 else
     echo -e "${RED}  Error: src directory not found${NC}"
     exit 1
