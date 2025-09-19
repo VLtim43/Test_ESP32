@@ -11,55 +11,35 @@
       "attrs": {}
     },
     {
-      "type": "wokwi-led",
-      "id": "led2",
-      "top": -22.8,
-      "left": 195.8,
-      "attrs": { "color": "blue" }
-    },
-    {
-      "type": "wokwi-led",
-      "id": "led3",
-      "top": -22.8,
-      "left": 243.8,
-      "attrs": { "color": "orange" }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r2",
-      "top": 51.4,
-      "left": 191.15,
-      "rotate": 270,
-      "attrs": { "value": "1000" }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r3",
-      "top": 51.4,
-      "left": 239.15,
-      "rotate": 270,
-      "attrs": { "value": "1000" }
-    },
-    {
       "type": "wokwi-photoresistor-sensor",
       "id": "ldr1",
       "top": -73.6,
       "left": -124,
       "attrs": {}
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": 3.14,
+      "left": 201.83,
+      "attrs": { "i2cAddress": "0x3c" }
     }
   ],
   "connections": [
     ["esp:TX0", "$serialMonitor:RX", "", []],
     ["esp:RX0", "$serialMonitor:TX", "", []],
-    ["esp:GND.1", "led2:C", "black", ["h0"]],
-    ["esp:GND.1", "led3:C", "black", ["h0"]],
-    ["esp:D4", "r2:1", "blue", ["h0"]],
-    ["esp:D5", "r3:1", "orange", ["h0"]],
-    ["led3:A", "r3:2", "orange", ["v0"]],
-    ["led2:A", "r2:2", "blue", ["v0"]],
     ["ldr1:VCC", "esp:3V3", "red", ["h288", "v240"]],
     ["esp:GND.1", "ldr1:GND", "black", ["h253.9", "v-197"]],
-    ["esp:D12", "ldr1:DO", "green", ["h-33.8", "v90.4", "h172.8", "v-9.6"]]
+    ["esp:D12", "ldr1:DO", "green", ["h-33.8", "v90.4", "h172.8", "v-9.6"]],
+    ["oled1:GND", "esp:GND.1", "black", ["v-19.2", "h-67.2", "v153.6"]],
+    ["oled1:VCC", "esp:3V3", "red", ["v-28.8", "h-86.25", "v182.4"]],
+    ["oled1:SDA", "esp:D21", "yellow", ["v-38.4", "h-134.33", "v96"]],
+    [
+      "oled1:SCL",
+      "esp:D22",
+      "white",
+      ["v-48", "h67.5", "v172.8", "h-211.2", "v-96"]
+    ]
   ],
   "dependencies": {}
 }
